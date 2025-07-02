@@ -17,31 +17,12 @@ body {
   margin-bottom: 32px;
   width: 100%;
 }
-.mwc-input-container {
-  flex: 1;
-  max-width: 400px;
-}
 .mwc-label-section {
   font-size: 16px;
   font-weight: 600;
   color: #222;
   margin-bottom: 10px;
   margin-left: 2px;
-}
-.mwc-input, .mwc-select {
-  width: 100%;
-  padding: 16px;
-  border: 1.5px solid #bdbdbd;
-  border-radius: 8px;
-  font-size: 16px;
-  font-family: 'Inter', Arial, sans-serif;
-  background: white;
-  transition: border-color 0.2s;
-  box-sizing: border-box;
-}
-.mwc-input:focus, .mwc-select:focus {
-  outline: none;
-  border-color: #6247aa;
 }
 .mwc-columns {
   display: flex;
@@ -115,8 +96,9 @@ body {
   color: #6247aa;
   background: #f3f4f6;
 }
-.mwc-btn-upload i {
-  font-size: 18px;
+.mwc-btn-upload-icon {
+  font-size: 22px;
+  margin-right: 8px;
 }
 @media (max-width: 900px) {
   .mwc-main {
@@ -142,7 +124,4 @@ body {
   .mwc-columns {
     gap: 12px;
   }
-  .mwc-input-container {
-    max-width: 100%;
-  }
-}
+} 
