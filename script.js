@@ -150,51 +150,60 @@ fileInput.addEventListener('change', function() {
 
 nameInput.addEventListener('input', drawFinalPreview);
 
-function sendToOneDrive() {
+async function sendToOneDrive() {
   if (!cropper) {
     alert("Vælg og beskær et billede først!");
     return;
   }
-  // Brug canvas fra live-preview (med gradient og tekst)
-  finalPreviewCanvas.toBlob(function(blob) {
-    if (blob.size > 6 * 1024 * 1024) {
-      alert("Det færdige billede er for stort. Prøv et mindre billede eller kortere tekst.");
-      return;
-    }
-    // Brug navn som filnavn, rens for ugyldige tegn og tilføj tidspunkt
-    let rawName = nameInput.value.trim() || 'billede';
-    let safeName = rawName.replace(/[^a-zA-Z0-9æøåÆØÅ _-]/g, '');
-    const now = new Date();
-    const hh = String(now.getHours()).padStart(2, '0');
-    const mm = String(now.getMinutes()).padStart(2, '0');
-    const ss = String(now.getSeconds()).padStart(2, '0');
-    const dd = String(now.getDate()).padStart(2, '0');
-    const MM = String(now.getMonth() + 1).padStart(2, '0');
-    const yyyy = now.getFullYear();
-    const timeStr = `${hh}${mm}${ss}-${dd}${MM}${yyyy}`;
-    const filename = `${safeName} ${timeStr}.jpg`;
-
-    const formData = new FormData();
-    formData.append("file", blob, filename);
-
-    fetch("https://hooks.zapier.com/hooks/catch/10731374/ubwql5z/", {
-      method: "POST",
-      body: formData
-    })
-    .then(response => {
-      if (response.ok) {
-        alert("Billedet er beskåret, med tekst og gradient, og sendt til OneDrive!");
-      } else {
-        alert("Noget gik galt. Prøv igen.");
+  
+  try {
+    // Hent webhook URL fra Vercel API
+    const response = await fetch('/api/get-webhook-url');
+    const { webhookUrl } = await response.json();
+    
+    // Brug canvas fra live-preview (med gradient og tekst)
+    finalPreviewCanvas.toBlob(function(blob) {
+      if (blob.size > 6 * 1024 * 1024) {
+        alert("Det færdige billede er for stort. Prøv et mindre billede eller kortere tekst.");
+        return;
       }
-    })
-    .catch(() => {
-      alert("Noget gik galt. Prøv igen.");
-    });
-  }, "image/jpeg", 0.92);
+      // Brug navn som filnavn, rens for ugyldige tegn og tilføj tidspunkt
+      let rawName = nameInput.value.trim() || 'billede';
+      let safeName = rawName.replace(/[^a-zA-Z0-9æøåÆØÅ _-]/g, '');
+      const now = new Date();
+      const hh = String(now.getHours()).padStart(2, '0');
+      const mm = String(now.getMinutes()).padStart(2, '0');
+      const ss = String(now.getSeconds()).padStart(2, '0');
+      const dd = String(now.getDate()).padStart(2, '0');
+      const MM = String(now.getMonth() + 1).padStart(2, '0');
+      const yyyy = now.getFullYear();
+      const timeStr = `${hh}${mm}${ss}-${dd}${MM}${yyyy}`;
+      const filename = `${safeName} ${timeStr}.jpg`;
+
+      const formData = new FormData();
+      formData.append("file", blob, filename);
+
+      fetch(webhookUrl, {
+        method: "POST",
+        body: formData
+      })
+      .then(response => {
+        if (response.ok) {
+          alert("Billedet er beskåret, med tekst og gradient, og sendt til OneDrive!");
+        } else {
+          alert("Noget gik galt. Prøv igen.");
+        }
+      })
+      .catch(() => {
+        alert("Noget gik galt. Prøv igen.");
+      });
+    }, "image/jpeg", 0.92);
+  } catch (error) {
+    alert("Kunne ikke hente webhook URL. Prøv igen.");
+  }
 }
 
 // Skjul cropper, preview og send-knap fra start
 window.addEventListener('DOMContentLoaded', function() {
   afterUpload.style.display = 'none';
-}); 
+});
