@@ -15,29 +15,29 @@
 <body>
   <div class="mwc-main">
     <button class="mwc-btn-upload" onclick="document.getElementById('file-input').click()">
-      <i class="fas fa-upload"></i>
+      <i class="fas fa-upload mwc-btn-upload-icon"></i>
       Upload billede
     </button>
     <input type="file" id="file-input" accept="image/*" style="display:none">
     
     <div class="mwc-input-row">
-      <div class="mwc-input-container">
-        <label class="mwc-label-section">Navn</label>
-        <input type="text" id="name-input" placeholder="Skriv dit navn" class="mwc-input">
+      <div style="width:100%;max-width:400px;">
+        <div class="mwc-label-section">Navn</div>
+        <input type="text" id="name-input" placeholder="Skriv dit navn" style="width:100%; padding:16px; border:1.5px solid #bdbdbd; border-radius:8px; font-size:16px; font-family:'Inter',Arial,sans-serif;">
       </div>
       
-      <div class="mwc-input-container">
-        <label class="mwc-label-section">Titel</label>
-        <select id="title-select" class="mwc-select">
+      <div style="width:100%;max-width:400px;">
+        <div class="mwc-label-section">Titel</div>
+        <select id="title-select" style="width:100%; padding:16px; border:1.5px solid #bdbdbd; border-radius:8px; font-size:16px; font-family:'Inter',Arial,sans-serif; background:white;">
           <option value="Journalist">Journalist</option>
           <option value="Redaktør">Redaktør</option>
           <option value="Andet">Andet</option>
         </select>
       </div>
       
-      <div class="mwc-input-container">
-        <label class="mwc-label-section">Anden titel</label>
-        <input type="text" id="custom-title-input" placeholder="Skriv din titel" class="mwc-input" style="display:none;">
+      <div style="width:100%;max-width:400px;">
+        <div class="mwc-label-section">Anden titel</div>
+        <input type="text" id="custom-title-input" placeholder="Skriv din titel" style="width:100%; padding:16px; border:1.5px solid #bdbdbd; border-radius:8px; font-size:16px; font-family:'Inter',Arial,sans-serif; display:none;">
       </div>
     </div>
     
