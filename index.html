@@ -8,23 +8,39 @@
   <link rel="stylesheet" href="style.css">
   <!-- Cropper.js CSS -->
   <link  href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
-  <title>Material M3 UI</title>
+  <!-- Font Awesome for ikoner -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <title>Billede Upload</title>
 </head>
 <body>
   <div class="mwc-main">
-    <mwc-button id="upload-btn" raised icon="upload" style="margin-bottom:24px;" onclick="document.getElementById('file-input').click()">
+    <button class="mwc-btn-upload" onclick="document.getElementById('file-input').click()">
+      <i class="fas fa-upload mwc-btn-upload-icon"></i>
       Upload billede
-    </mwc-button>
+    </button>
     <input type="file" id="file-input" accept="image/*" style="display:none">
+    
     <div class="mwc-input-row">
-      <mwc-textfield id="name-input" label="Navn" placeholder="Skriv dit navn" style="width:100%;max-width:400px;"></mwc-textfield>
-      <mwc-select id="title-select" label="Titel" style="width:100%;max-width:400px;">
-        <mwc-list-item value="Journalist">Journalist</mwc-list-item>
-        <mwc-list-item value="Redaktør">Redaktør</mwc-list-item>
-        <mwc-list-item value="Andet">Andet</mwc-list-item>
-      </mwc-select>
-      <mwc-textfield id="custom-title-input" label="Anden titel" placeholder="Skriv din titel" style="width:100%;max-width:400px;display:none;"></mwc-textfield>
+      <div style="width:100%;max-width:400px;">
+        <div class="mwc-label-section">Navn</div>
+        <input type="text" id="name-input" placeholder="Skriv dit navn" style="width:100%; padding:16px; border:1.5px solid #bdbdbd; border-radius:8px; font-size:16px; font-family:'Inter',Arial,sans-serif;">
+      </div>
+      
+      <div style="width:100%;max-width:400px;">
+        <div class="mwc-label-section">Titel</div>
+        <select id="title-select" style="width:100%; padding:16px; border:1.5px solid #bdbdbd; border-radius:8px; font-size:16px; font-family:'Inter',Arial,sans-serif; background:white;">
+          <option value="Journalist">Journalist</option>
+          <option value="Redaktør">Redaktør</option>
+          <option value="Andet">Andet</option>
+        </select>
+      </div>
+      
+      <div style="width:100%;max-width:400px;">
+        <div class="mwc-label-section">Anden titel</div>
+        <input type="text" id="custom-title-input" placeholder="Skriv din titel" style="width:100%; padding:16px; border:1.5px solid #bdbdbd; border-radius:8px; font-size:16px; font-family:'Inter',Arial,sans-serif; display:none;">
+      </div>
     </div>
+    
     <div id="after-upload" style="display:none; width:100%;">
       <div class="mwc-columns">
         <div class="mwc-col">
@@ -40,14 +56,12 @@
           </div>
         </div>
       </div>
-      <mwc-button id="send-btn" raised style="margin-top:32px;" onclick="sendToOneDrive()">Send til fremkaldelse</mwc-button>
+      <button class="mwc-send-btn" onclick="sendToOneDrive()">
+        Send til fremkaldelse
+      </button>
     </div>
   </div>
   <script src="script.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
-  <script type="module" src="https://unpkg.com/@material/mwc-button@latest?module"></script>
-  <script type="module" src="https://unpkg.com/@material/mwc-textfield@latest?module"></script>
-  <script type="module" src="https://unpkg.com/@material/mwc-select@latest?module"></script>
-  <script type="module" src="https://unpkg.com/@material/mwc-list/mwc-list-item.js?module"></script>
 </body>
-</html> 
+</html>
