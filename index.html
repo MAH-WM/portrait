@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="da">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>Watch Selfie Generator</title>
+    <link rel="stylesheet" href="./vendor/cropper.min.css" />
+    <link rel="stylesheet" href="./styles.css" />
+    <link rel="preconnect" href="https://webfonts.peytzmail.com" />
+    <script defer src="./vendor/cropper.min.js"></script>
+    <script defer src="./app.js"></script>
+  </head>
+  <body>
+    <main class="app-shell">
+      <header>
+        <h1>Medarbejderfoto</h1>
+        <p>Tag eller upload et billede, udfyld navn og titel, og generér din printklare fil.</p>
+      </header>
+
+      <!-- STEP 1 -->
+      <section class="step" data-step="1">
+        <form id="info-form">
+          <label class="input-group">
+            <span>Dit navn</span>
+            <input type="text" id="full-name" name="full-name" placeholder="Fornavn Efternavn" required />
+            <p class="field-error" id="full-name-error" role="alert"></p>
+          </label>
+
+          <label class="input-group">
+            <span>Din titel</span>
+            <input type="text" id="job-title" name="job-title" placeholder="Titel" required />
+            <p class="field-error" id="job-title-error" role="alert"></p>
+          </label>
+
+          <div class="button-stack">
+            <button type="button" id="capture-btn" class="primary">Tag selfie</button>
+            <button type="button" id="upload-btn" class="secondary">Upload billede</button>
+            <input
+              type="file"
+              id="file-input"
+              accept="image/*"
+              capture="environment"
+              hidden
+            />
+          </div>
+
+          <p class="helper">
+            Sørg for godt lys og at du står midt i billedet. Du kan beskære i næste trin.
+          </p>
+        </form>
+      </section>
+
+      <!-- STEP 2 -->
+      <section class="step" data-step="2" hidden>
+        <div class="cropper-wrapper">
+          <img id="cropper-image" alt="Forhåndsvisning" />
+        </div>
+        <p class="helper">
+          Træk i den blå håndtag for at beskære. Sørg for, at dine øjne ligger på den
+          øverste 1/3-linje for den rigtige komposition.
+        </p>
+        <div class="step-actions">
+          <button type="button" class="secondary" data-nav="back">Tilbage</button>
+          <button type="button" class="primary" id="crop-next">Frem</button>
+        </div>
+      </section>
+
+      <!-- STEP 3 -->
+      <section class="step" data-step="3" hidden>
+        <div class="preview-wrapper">
+          <canvas id="output-canvas" width="1063" height="1299" hidden></canvas>
+          <img id="preview-image" alt="Færdigt billede" hidden />
+        </div>
+        <div class="step-actions vertical">
+          <button type="button" class="secondary" id="upload-final">Upload til fremkaldelse</button>
+          <button type="button" class="ghost" data-nav="start">Start forfra</button>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
+
