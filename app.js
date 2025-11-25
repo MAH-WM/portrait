@@ -27,9 +27,23 @@ let isDrawing = false;
 const forbiddenCharsPattern = /[\\/:*?"<>|]/;
 
 const fontsReady = Promise.all([
-  document.fonts.load("42px 'PublicoHeadline-Light'"),
-  document.fonts.load("22px 'Montserrat-Bold'")
-]);
+  document.fonts.load("85px 'PublicoHeadline-Light'"),
+  document.fonts.load("50px 'Montserrat-Bold'")
+]).catch((error) => {
+  console.error("Font loading failed:", error);
+  // Fallback: wait a bit and try again
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      Promise.all([
+        document.fonts.load("85px 'PublicoHeadline-Light'"),
+        document.fonts.load("50px 'Montserrat-Bold'")
+      ]).then(resolve).catch(() => {
+        console.warn("Fonts may not be loaded correctly");
+        resolve(); // Continue anyway
+      });
+    }, 500);
+  });
+});
 
 document.addEventListener("click", (event) => {
   const nav = event.target.closest("[data-nav]");
@@ -152,6 +166,19 @@ async function handleCropConfirm() {
   rawCtx.drawImage(croppedCanvas, 0, 0, rawCanvas.width, rawCanvas.height);
 
   await fontsReady;
+  
+  // Double-check that fonts are actually loaded
+  const testCtx = document.createElement("canvas").getContext("2d");
+  testCtx.font = "85px 'PublicoHeadline-Light'";
+  const publicoLoaded = testCtx.measureText("M").width > 0;
+  testCtx.font = "50px 'Montserrat-Bold'";
+  const montserratLoaded = testCtx.measureText("M").width > 0;
+  
+  if (!publicoLoaded || !montserratLoaded) {
+    console.warn("Fonts may not be fully loaded, waiting additional 500ms...");
+    await new Promise(resolve => setTimeout(resolve, 500));
+  }
+  
   // Only draw overlay on the final canvas, NOT on rawCanvas
   drawOverlay(ctx, nameInput.value.trim(), titleInput.value.trim());
   const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
@@ -188,12 +215,15 @@ function drawOverlay(ctx, name, title) {
   const titleLineHeight = 51;
 
   const nameLines = wrapText(name, ctx, nameFont, usableWidth, nameLineHeight, 2);
-  const titleLines = wrapText(
+  
+  // For title, we need to account for letter-spacing (0.08em) in the width calculation
+  const titleLines = wrapTextWithLetterSpacing(
     title.toUpperCase(),
     ctx,
     titleFont,
     usableWidth,
     titleLineHeight,
+    0.08,
     2
   );
 
@@ -243,6 +273,54 @@ function wrapText(text, ctx, font, maxWidth, lineHeight, maxLines = 2) {
     const trimmed = lines.slice(0, maxLines);
     const lastLine = trimmed[trimmed.length - 1];
     trimmed[trimmed.length - 1] = addEllipsis(ctx, lastLine, maxWidth);
+    return trimmed;
+  }
+
+  return lines;
+}
+
+function measureTextWithLetterSpacing(ctx, text, spacingEm) {
+  const spacing = spacingEm * ctx.measureText("M").width;
+  let totalWidth = 0;
+  for (let i = 0; i < text.length; i++) {
+    totalWidth += ctx.measureText(text[i]).width;
+    if (i < text.length - 1) {
+      totalWidth += spacing;
+    }
+  }
+  return totalWidth;
+}
+
+function wrapTextWithLetterSpacing(text, ctx, font, maxWidth, lineHeight, spacingEm, maxLines = 2) {
+  ctx.font = font;
+  const words = text.split(/\s+/);
+  const lines = [];
+  let currentLine = "";
+
+  words.forEach((word) => {
+    const testLine = currentLine ? `${currentLine} ${word}` : word;
+    const testWidth = measureTextWithLetterSpacing(ctx, testLine, spacingEm);
+    if (testWidth > maxWidth && currentLine) {
+      lines.push(currentLine);
+      currentLine = word;
+    } else {
+      currentLine = testLine;
+    }
+  });
+
+  if (currentLine) {
+    lines.push(currentLine);
+  }
+
+  if (lines.length > maxLines) {
+    const trimmed = lines.slice(0, maxLines);
+    const lastLine = trimmed[trimmed.length - 1];
+    // For ellipsis, we need to account for letter-spacing too
+    let fitted = lastLine;
+    while (measureTextWithLetterSpacing(ctx, `${fitted}…`, spacingEm) > maxWidth && fitted.length) {
+      fitted = fitted.slice(0, -1);
+    }
+    trimmed[trimmed.length - 1] = `${fitted}…`;
     return trimmed;
   }
 
