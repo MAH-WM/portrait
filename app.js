@@ -40,24 +40,7 @@ let bylinePreviewRaf = null;
 let isDrawing = false;
 const forbiddenCharsPattern = /[\\/:*?"<>|]/;
 
-const fontsReady = Promise.all([
-  document.fonts.load("85px 'PublicoHeadline-Light'"),
-  document.fonts.load("50px 'Montserrat-Bold'")
-]).catch((error) => {
-  console.error("Font loading failed:", error);
-  // Fallback: wait a bit and try again
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      Promise.all([
-        document.fonts.load("85px 'PublicoHeadline-Light'"),
-        document.fonts.load("50px 'Montserrat-Bold'")
-      ]).then(resolve).catch(() => {
-        console.warn("Fonts may not be loaded correctly");
-        resolve(); // Continue anyway
-      });
-    }, 500);
-  });
-});
+const fontsReady = ensureCanvasFontsLoaded();
 
 document.addEventListener("click", (event) => {
   const nav = event.target.closest("[data-nav]");
@@ -303,18 +286,6 @@ async function handleCropConfirm() {
   rawCtx.drawImage(croppedCanvas, 0, 0, rawCanvas.width, rawCanvas.height);
 
   await fontsReady;
-  
-  // Double-check that fonts are actually loaded
-  const testCtx = document.createElement("canvas").getContext("2d");
-  testCtx.font = "85px 'PublicoHeadline-Light'";
-  const publicoLoaded = testCtx.measureText("M").width > 0;
-  testCtx.font = "50px 'Montserrat-Bold'";
-  const montserratLoaded = testCtx.measureText("M").width > 0;
-  
-  if (!publicoLoaded || !montserratLoaded) {
-    console.warn("Fonts may not be fully loaded, waiting additional 500ms...");
-    await new Promise(resolve => setTimeout(resolve, 500));
-  }
   
   // Only draw overlay on the final canvas, NOT on rawCanvas
   drawOverlay(ctx, nameInput.value.trim(), titleInput.value.trim());
@@ -636,5 +607,46 @@ function validateBylineEmail() {
   bylineEmailInput.setCustomValidity(message);
   bylineEmailError.textContent = message;
   return message === "";
+}
+
+async function ensureCanvasFontsLoaded() {
+  try {
+    if (!document.fonts || typeof FontFace === "undefined") {
+      await document.fonts?.ready;
+      return;
+    }
+
+    const requiredFonts = [
+      {
+        family: "PublicoHeadline-Light",
+        source: "url('./vendor/fonts/PublicoHeadline-Light.woff')",
+        descriptors: { weight: "300", style: "normal" }
+      },
+      {
+        family: "Montserrat-Bold",
+        source: "url('./vendor/fonts/Montserrat-Bold.woff')",
+        descriptors: { weight: "700", style: "normal" }
+      }
+    ];
+
+    await Promise.all(
+      requiredFonts.map(async ({ family, source, descriptors }) => {
+        if (document.fonts.check(`16px '${family}'`)) return;
+        const fontFace = new FontFace(family, source, descriptors);
+        const loaded = await fontFace.load();
+        document.fonts.add(loaded);
+      })
+    );
+
+    await document.fonts.ready;
+    await Promise.all([
+      document.fonts.load("85px 'PublicoHeadline-Light'"),
+      document.fonts.load("50px 'Montserrat-Bold'")
+    ]);
+  } catch (error) {
+    console.warn("Fonts may not have loaded fully, retrying shortly.", error);
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    await document.fonts?.ready;
+  }
 }
 
