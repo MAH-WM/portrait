@@ -3,7 +3,7 @@ const PRINT_HEIGHT = 1299; // ~11 cm at 300 dpi
 const ASPECT_RATIO = PRINT_WIDTH / PRINT_HEIGHT;
 const BYLINE_SIZE = 600;
 const ZAPIER_WEBHOOK_URL = "https://hooks.zapier.com/hooks/catch/25480364/uzey70l/";
-const BYLINE_ZAPIER_WEBHOOK_URL = "";
+const BYLINE_ZAPIER_WEBHOOK_URL = "https://hooks.zapier.com/hooks/catch/25480364/ukbtz18/";
 const BYLINE_SEND_DEFAULT_TEXT = "Send byline-billede til min mail";
 
 const steps = Array.from(document.querySelectorAll(".step"));
@@ -261,13 +261,7 @@ function renderBylinePreview() {
   bylineCanvas.width = BYLINE_SIZE;
   bylineCanvas.height = BYLINE_SIZE;
   previewCtx.clearRect(0, 0, BYLINE_SIZE, BYLINE_SIZE);
-  previewCtx.save();
-  previewCtx.beginPath();
-  previewCtx.arc(BYLINE_SIZE / 2, BYLINE_SIZE / 2, BYLINE_SIZE / 2, 0, Math.PI * 2);
-  previewCtx.closePath();
-  previewCtx.clip();
   previewCtx.drawImage(squareCanvas, 0, 0);
-  previewCtx.restore();
 }
 
 function applyBylineAdjustments(pixelData) {
