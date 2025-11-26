@@ -76,6 +76,44 @@
         </div>
         <div class="step-actions vertical">
           <button type="button" class="secondary" id="upload-final">Upload til fremkaldelse</button>
+          <button type="button" class="primary" id="to-byline">Videre til byline-billede</button>
+          <button type="button" class="ghost" data-nav="start">Start forfra</button>
+        </div>
+      </section>
+
+      <!-- STEP 4 -->
+      <section class="step" data-step="4" hidden>
+        <div class="byline-preview-card">
+          <canvas id="byline-preview" width="600" height="600" aria-label="Forhåndsvisning af byline"></canvas>
+        </div>
+
+        <div class="cropper-wrapper byline-cropper">
+          <img id="byline-cropper-image" alt="Byline beskæring" />
+        </div>
+        <p class="helper">
+          Sørg for, at dit ansigt ligger inden for cirklen. Du kan justere billedet og efterfølgende lysstyrke og
+          kontrast.
+        </p>
+
+        <label class="slider-group">
+          <span>Lysstyrke</span>
+          <input type="range" id="byline-brightness" min="-50" max="50" value="0" />
+        </label>
+
+        <label class="slider-group">
+          <span>Kontrast</span>
+          <input type="range" id="byline-contrast" min="-50" max="50" value="0" />
+        </label>
+
+        <label class="input-group">
+          <span>Email til byline</span>
+          <input type="email" id="byline-email" placeholder="mail@example.com" required />
+          <p class="field-error" id="byline-email-error" role="alert"></p>
+        </label>
+
+        <div class="step-actions vertical">
+          <button type="button" class="primary" id="send-byline">Send byline-billede til min mail</button>
+          <button type="button" class="secondary" id="byline-back">Tilbage til upload</button>
           <button type="button" class="ghost" data-nav="start">Start forfra</button>
         </div>
       </section>

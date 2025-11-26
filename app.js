@@ -1,7 +1,10 @@
 const PRINT_WIDTH = 1063; // ~9 cm at 300 dpi
 const PRINT_HEIGHT = 1299; // ~11 cm at 300 dpi
 const ASPECT_RATIO = PRINT_WIDTH / PRINT_HEIGHT;
+const BYLINE_SIZE = 600;
 const ZAPIER_WEBHOOK_URL = "https://hooks.zapier.com/hooks/catch/25480364/uzey70l/";
+const BYLINE_ZAPIER_WEBHOOK_URL = "";
+const BYLINE_SEND_DEFAULT_TEXT = "Send byline-billede til min mail";
 
 const steps = Array.from(document.querySelectorAll(".step"));
 const form = document.getElementById("info-form");
@@ -17,12 +20,23 @@ const cropperImage = document.getElementById("cropper-image");
 const previewImg = document.getElementById("preview-image");
 const canvas = document.getElementById("output-canvas");
 const uploadFinalBtn = document.getElementById("upload-final");
+const toBylineBtn = document.getElementById("to-byline");
+const bylineCanvas = document.getElementById("byline-preview");
+const bylineCropperImage = document.getElementById("byline-cropper-image");
+const bylineBrightnessInput = document.getElementById("byline-brightness");
+const bylineContrastInput = document.getElementById("byline-contrast");
+const bylineEmailInput = document.getElementById("byline-email");
+const bylineEmailError = document.getElementById("byline-email-error");
+const bylineSendBtn = document.getElementById("send-byline");
+const bylineBackBtn = document.getElementById("byline-back");
 const rawCanvas = document.createElement("canvas");
 const rawCtx = rawCanvas.getContext("2d");
 
 let currentStep = 0;
 let selectedFile = null;
 let cropper = null;
+let bylineCropper = null;
+let bylinePreviewRaf = null;
 let isDrawing = false;
 const forbiddenCharsPattern = /[\\/:*?"<>|]/;
 
@@ -77,6 +91,13 @@ uploadBtn.addEventListener("click", () => {
 fileInput.addEventListener("change", handleFileChange);
 cropNextBtn.addEventListener("click", handleCropConfirm);
 uploadFinalBtn.addEventListener("click", handleUpload);
+toBylineBtn.addEventListener("click", prepareBylineStep);
+bylineBackBtn.addEventListener("click", () => showStep(2));
+bylineSendBtn.addEventListener("click", handleBylineSend);
+[bylineBrightnessInput, bylineContrastInput].forEach((input) => {
+  input.addEventListener("input", () => scheduleBylinePreview());
+});
+bylineEmailInput.addEventListener("input", validateBylineEmail);
 validateForm();
 
 function showStep(index) {
@@ -86,6 +107,7 @@ function showStep(index) {
   });
 
   if (index !== 1) destroyCropper();
+  if (index !== 3) destroyBylineCropper();
 }
 
 function resetFlow() {
@@ -96,6 +118,14 @@ function resetFlow() {
   previewImg.hidden = true;
   rawCanvas.width = 0;
   rawCanvas.height = 0;
+  destroyBylineCropper();
+  bylineCanvas.getContext("2d").clearRect(0, 0, BYLINE_SIZE, BYLINE_SIZE);
+  bylineBrightnessInput.value = "0";
+  bylineContrastInput.value = "0";
+  bylineEmailInput.value = "";
+  bylineEmailError.textContent = "";
+  bylineSendBtn.disabled = false;
+  bylineSendBtn.textContent = BYLINE_SEND_DEFAULT_TEXT;
   showStep(0);
 }
 
@@ -138,6 +168,119 @@ function destroyCropper() {
   if (cropper) {
     cropper.destroy();
     cropper = null;
+  }
+}
+
+function prepareBylineStep() {
+  if (!rawCanvas.width || !rawCanvas.height) {
+    alert("Lav først dit printklare billede.");
+    return;
+  }
+  bylineBrightnessInput.value = "0";
+  bylineContrastInput.value = "0";
+  bylineEmailError.textContent = "";
+  bylineSendBtn.disabled = false;
+  bylineSendBtn.textContent = BYLINE_SEND_DEFAULT_TEXT;
+  const dataUrl = rawCanvas.toDataURL("image/jpeg", 0.92);
+  const init = () => {
+    initBylineCropper();
+    showStep(3);
+  };
+  if (bylineCropperImage.complete && bylineCropperImage.src === dataUrl) {
+    init();
+    return;
+  }
+  bylineCropperImage.onload = () => {
+    bylineCropperImage.onload = null;
+    init();
+  };
+  bylineCropperImage.src = dataUrl;
+}
+
+function initBylineCropper() {
+  destroyBylineCropper();
+  bylineCropper = new Cropper(bylineCropperImage, {
+    aspectRatio: 1,
+    viewMode: 1,
+    dragMode: "move",
+    autoCropArea: 1,
+    background: false,
+    guides: false,
+    ready() {
+      scheduleBylinePreview(true);
+    },
+    crop() {
+      scheduleBylinePreview();
+    }
+  });
+}
+
+function destroyBylineCropper() {
+  if (bylineCropper) {
+    bylineCropper.destroy();
+    bylineCropper = null;
+  }
+  if (bylinePreviewRaf) {
+    cancelAnimationFrame(bylinePreviewRaf);
+    bylinePreviewRaf = null;
+  }
+}
+
+function scheduleBylinePreview(force = false) {
+  if (!bylineCropper) return;
+  if (force) {
+    if (bylinePreviewRaf) {
+      cancelAnimationFrame(bylinePreviewRaf);
+      bylinePreviewRaf = null;
+    }
+    renderBylinePreview();
+    return;
+  }
+  if (bylinePreviewRaf) return;
+  bylinePreviewRaf = requestAnimationFrame(() => {
+    bylinePreviewRaf = null;
+    renderBylinePreview();
+  });
+}
+
+function renderBylinePreview() {
+  if (!bylineCropper) return;
+  const squareCanvas = bylineCropper.getCroppedCanvas({
+    width: BYLINE_SIZE,
+    height: BYLINE_SIZE,
+    imageSmoothingEnabled: true,
+    imageSmoothingQuality: "high"
+  });
+  if (!squareCanvas) return;
+  const ctx = squareCanvas.getContext("2d");
+  const data = ctx.getImageData(0, 0, BYLINE_SIZE, BYLINE_SIZE);
+  applyBylineAdjustments(data.data);
+  ctx.putImageData(data, 0, 0);
+
+  const previewCtx = bylineCanvas.getContext("2d");
+  bylineCanvas.width = BYLINE_SIZE;
+  bylineCanvas.height = BYLINE_SIZE;
+  previewCtx.clearRect(0, 0, BYLINE_SIZE, BYLINE_SIZE);
+  previewCtx.save();
+  previewCtx.beginPath();
+  previewCtx.arc(BYLINE_SIZE / 2, BYLINE_SIZE / 2, BYLINE_SIZE / 2, 0, Math.PI * 2);
+  previewCtx.closePath();
+  previewCtx.clip();
+  previewCtx.drawImage(squareCanvas, 0, 0);
+  previewCtx.restore();
+}
+
+function applyBylineAdjustments(pixelData) {
+  const brightnessOffset = Number(bylineBrightnessInput.value) * 2.55;
+  const contrastValue = Number(bylineContrastInput.value);
+  const contrastFactor = (259 * (contrastValue + 255)) / (255 * (259 - contrastValue));
+
+  for (let i = 0; i < pixelData.length; i += 4) {
+    const gray =
+      pixelData[i] * 0.299 + pixelData[i + 1] * 0.587 + pixelData[i + 2] * 0.114;
+    let value = contrastFactor * (gray - 128) + 128 + brightnessOffset;
+    value = Math.max(0, Math.min(255, value));
+    pixelData[i] = pixelData[i + 1] = pixelData[i + 2] = value;
   }
 }
 
@@ -394,6 +537,52 @@ async function handleUpload() {
   }
 }
 
+async function handleBylineSend() {
+  if (!BYLINE_ZAPIER_WEBHOOK_URL) {
+    alert("Tilføj Zapier webhook-URL til byline-flyden i app.js.");
+    return;
+  }
+  if (!bylineCropper) {
+    alert("Beskær først dit byline-billede.");
+    return;
+  }
+  if (!validateBylineEmail()) {
+    bylineEmailInput.reportValidity();
+    return;
+  }
+
+  try {
+    bylineSendBtn.disabled = true;
+    bylineSendBtn.textContent = "Sender...";
+    scheduleBylinePreview(true);
+    const bylineBlob = await canvasToBlob(bylineCanvas, "image/png");
+
+    const safeName = (nameInput.value.trim() || "medarbejder").toLowerCase().replace(/\s+/g, "-");
+    const formData = new FormData();
+    formData.append("bylineFile", bylineBlob, `${safeName}-byline.png`);
+    formData.append("fullName", nameInput.value.trim());
+    formData.append("title", titleInput.value.trim());
+    formData.append("email", bylineEmailInput.value.trim());
+    formData.append("brightness", bylineBrightnessInput.value);
+    formData.append("contrast", bylineContrastInput.value);
+
+    const response = await fetch(BYLINE_ZAPIER_WEBHOOK_URL, {
+      method: "POST",
+      body: formData
+    });
+    if (!response.ok) {
+      throw new Error("Byline-upload mislykkedes");
+    }
+    bylineSendBtn.textContent = "Sendt ✔";
+  } catch (error) {
+    console.error(error);
+    alert("Der opstod en fejl under afsendelsen af byline-billedet. Prøv igen.");
+    bylineSendBtn.textContent = BYLINE_SEND_DEFAULT_TEXT;
+  } finally {
+    bylineSendBtn.disabled = false;
+  }
+}
+
 function fileToDataURL(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -403,7 +592,7 @@ function fileToDataURL(file) {
   });
 }
 
-function canvasToBlob(targetCanvas) {
+function canvasToBlob(targetCanvas, type = "image/jpeg", quality = 0.92) {
   return new Promise((resolve, reject) => {
     targetCanvas.toBlob(
       (blob) => {
@@ -413,8 +602,8 @@ function canvasToBlob(targetCanvas) {
           reject(new Error("Kunne ikke generere billedfil."));
         }
       },
-      "image/jpeg",
-      0.92
+      type,
+      type === "image/png" ? undefined : quality
     );
   });
 }
@@ -439,6 +628,19 @@ function validateTextField(inputEl, errorEl) {
   }
   inputEl.setCustomValidity(message);
   errorEl.textContent = message;
+  return message === "";
+}
+
+function validateBylineEmail() {
+  const value = bylineEmailInput.value.trim();
+  let message = "";
+  if (!value) {
+    message = "Angiv en email.";
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+    message = "Indtast en gyldig email.";
+  }
+  bylineEmailInput.setCustomValidity(message);
+  bylineEmailError.textContent = message;
   return message === "";
 }
 
